@@ -4,9 +4,14 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from models import create_tables, Publisher, Shop, Book, Stock, Sale
 
-
-DSN = 'postgresql://postgres:1@localhost:5432/postgres'
+user_name = 'postgres'
+password = '1'
+host = 'localhost'
+port = '5432'
+bd_name = 'postgres'
+DSN = f'postgresql://{user_name}:{password}@{host}:{port}/{bd_name}'
 engine = sqlalchemy.create_engine(DSN)
+con = engine.connect()
 create_tables(engine)
 
 Session = sessionmaker(bind=engine)
@@ -26,19 +31,43 @@ for record in data:
     session.add(model(id=record.get('pk'), **record.get('fields')))
 session.commit()
 
+# inp = input('Введите Имя издателя: ')
+inp = 'O’Reilly'
 
 
-inp = input('Введите Имя издателя: ')
-q = session.query(Book, Publisher).join(Publisher).filter(Publisher.name == inp)
-for s in q.all():
-    print(s.Publisher.name, s.Book.title)
+print('вариант1')
+print()
+subq = session.query(Shop.name, Stock.id_book).join(Stock.stock_shops).subquery()
+subq2 = session.query(Book, subq).join(subq, Book.id == subq.c.id_book).subquery()
+subq3 = session.query(Publisher.name, subq2).join(subq2, Publisher.id == subq2.c.id_publisher).filter(Publisher.name == inp)
+print (subq3)
+for s in subq3:
+    print(s)
+
+print('вариант2')
+print()
+subq = session.query(Shop, Stock).join(Stock.stock_shops).subquery()
+subq2 = session.query(Book, subq).join(subq, Book.id == subq.c.id_book).subquery()
+subq3 = session.query(Publisher, subq2).join(subq2, Publisher.id == subq2.c.id_publisher).filter(Publisher.name == inp)
+print (subq3)
+for s in subq3:
+    print(s.Publisher.name)
+
+print()
+print('вар 3')
+q = (con.execute(
+'''
+select s."name" , b.title, p."name"
+from shop as s
+join stock as st on s.id = st.id_shop
+join book as b on st.id_book = b.id
+join publisher as p on b.id_publisher = p.id
+where p."name" = %s
+order  by s."name"
+''',(inp,)
+).fetchall())
+for s in q:
+    print(s)
 
 
-# q = session.query(Publisher).filter(Publisher.id == input("Введите идентификатор (id) издателя "))
-# for s in q.all():
-#     print(s.id, s.name)
-#
-#
-# subq = session.query(Shop).all()
-# for s in subq:
-#     print(s.id, s.name)
+

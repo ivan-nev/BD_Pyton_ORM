@@ -27,11 +27,11 @@ class Homework(Base):
 
 
 def create_tables(engine):
-    # Base.metadata.drop_all(engine)
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
 
 
-DSN = "postgresql://postgres:postgres@localhost:5432/netology_db"
+DSN = "postgresql://postgres:1@localhost:5432/postgres"
 engine = sqlalchemy.create_engine(DSN)
 create_tables(engine)
 
