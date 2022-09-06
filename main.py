@@ -69,5 +69,9 @@ order  by s."name"
 for s in q:
     print(s)
 
+print()
+print('вар преподавателя')
+for s in session.query(Shop.name).join(Stock).join(Book).join(Publisher).filter(Publisher.id == inp or Publisher.name.ilike(f'%{inp}%')).distinct():
+    print(s.name)
 
 
